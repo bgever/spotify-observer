@@ -1,0 +1,6 @@
+[submodule "spa"]
+	path = spa
+	url = https://github.com/bgever/spotify-observer-spa.git
+[submodule "api"]
+	path = api
+	url = https://github.com/bgever/spotify-observer-api.git
