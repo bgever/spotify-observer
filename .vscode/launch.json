@@ -5,9 +5,20 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": "API (Debug Nest Framework)",
+            "type": "node",
+            "request": "attach",
+            "port": 9229,
+            "address": "localhost",
+            "remoteRoot": "/server",
+            "localRoot": "${workspaceRoot}/api",
+            "protocol": "inspector",
+            "restart": true
+        },
+        {
             "type": "chrome",
             "request": "launch",
-            "name": "Launch Chrome against localhost",
+            "name": "SPA (Launch Chrome against localhost)",
             "url": "http://localhost:1234",
             "webRoot": "${workspaceFolder}/spa",
             "breakOnLoad": true,

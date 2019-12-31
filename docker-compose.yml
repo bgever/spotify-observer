@@ -1,0 +1,38 @@
+version: '3.7'
+services:
+
+  api:
+    build: api/
+    command: sh -c './wait-for mongo:27017 -- ./wait-for redis:6379 -- npx nest start --debug 0.0.0.0:9229'
+    ports:
+      - 3000:3000 # Server port.
+      - 9229:9229 # Node.js debugging port.
+    networks:
+      - net
+    volumes:
+      - '.:/src'
+      - /src/node_modules/ # Prevent local cached node modules, so that image always rebuilds
+    environment:
+      - REDIS_HOST=redis
+      - AUTH_REDIRECT_URI
+      - AUTH_CLIENT_ID
+      - AUTH_CLIENT_SECRET
+      - MONGO_URI
+    depends_on:
+      - redis
+      - mongo
+
+  redis:
+    image: redis:alpine
+    networks:
+      - net
+
+  mongo:
+    image: mongo:4.0
+    ports:
+      - 27017:27017
+    networks:
+      - net
+
+networks:
+  net:
