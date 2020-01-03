@@ -3,26 +3,17 @@ services:
 
   redis:
     image: redis:alpine
-    networks:
-      - net
 
   mongo:
     image: mongo:4.0
     ports:
       - 27017:27017
-    networks:
-      - net
 
   api:
     build:
       context: api/
       target: dev
     command: sh -c 'wait-for mongo:27017 -- wait-for redis:6379 -- npx nest start --watch --debug 0.0.0.0:9229'
-    ports:
-      - 3000:3000 # Server port.
-      - 9229:9229 # Node.js debugging port.
-    networks:
-      - net
     volumes:
       - ./api:/server
       - /server/node_modules # Prevent local cached node modules, so that image always rebuilds
@@ -35,23 +26,55 @@ services:
     depends_on:
       - redis
       - mongo
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.api.rule=Host(`api.localhost`)
+      - traefik.http.routers.api.entrypoints=web
+      - traefik.http.routers.api.service=api
+      - traefik.http.services.api.loadbalancer.server.port=3000
+      - traefik.http.routers.api-inspect.rule=Host(`localhost`) # Node debugger doesn't support subdomains.
+      - traefik.http.routers.api-inspect.entrypoints=nodeinspect
+      - traefik.http.routers.api-inspect.service=api-inspect
+      - traefik.http.services.api-inspect.loadbalancer.server.port=9229
 
   spa:
     build:
       context: spa/
       target: dev
     command: sh -c 'wait-for api:3000 -- npm start'
-    ports:
-      - 1234:1234 # Dev server port.
-    networks:
-      - net
     volumes:
       - ./spa:/app
       - /app/node_modules # Prevent local cached node modules, so that image always rebuilds
     environment:
       - AUTH_CLIENT_ID
+      - API_BASE_URI
     depends_on:
       - api
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.spa.rule=Host(`app.localhost`)
+      - traefik.http.routers.spa.entrypoints=web
+      - traefik.http.routers.spa.service=spa
+      - traefik.http.services.spa.loadbalancer.server.port=1234
+      - traefik.http.routers.spa-hmr.rule=Host(`app.localhost`)
+      - traefik.http.routers.spa-hmr.entrypoints=hmr
+      - traefik.http.routers.spa-hmr.service=spa-hmr
+      - traefik.http.services.spa-hmr.loadbalancer.server.port=12345
 
-networks:
-  net:
+  traefik:
+    image: traefik:v2.1
+    command:
+      #- '--log.level=DEBUG'
+      - --api.insecure=true
+      - --providers.docker=true
+      - --providers.docker.exposedbydefault=false
+      - --entrypoints.web.address=:80
+      - --entrypoints.hmr.address=:12345
+      - --entrypoints.nodeinspect.address=:9229
+    ports:
+      - 80:80
+      - 12345:12345
+      - 9229:9229
+      - 8080:8080
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro

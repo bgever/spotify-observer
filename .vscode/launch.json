@@ -19,7 +19,7 @@
             "type": "chrome",
             "request": "launch",
             "name": "SPA (Launch Chrome against localhost)",
-            "url": "http://localhost:1234",
+            "url": "http://app.localhost",
             "webRoot": "${workspaceFolder}/spa",
             "breakOnLoad": true,
             "sourceMapPathOverrides": {
