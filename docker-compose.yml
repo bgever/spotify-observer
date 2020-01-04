@@ -19,10 +19,14 @@ services:
       - /server/node_modules # Prevent local cached node modules, so that image always rebuilds
     environment:
       - REDIS_HOST=redis
+      - MONGO_URI=mongodb://mongo
       - AUTH_REDIRECT_URI
       - AUTH_CLIENT_ID
       - AUTH_CLIENT_SECRET
-      - MONGO_URI
+      - JWT_PRIVATE_KEY_PEM
+      - JWT_PUBLIC_KEY_PEM
+      - JWT_AUDIENCE
+      - JWT_ISSUER
     depends_on:
       - redis
       - mongo
